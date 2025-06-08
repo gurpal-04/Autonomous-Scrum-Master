@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from google.adk.cli.fast_api import get_fast_api_app
 # from custom_routes import router as custom_router
-from routes import epic, user_story, sprint
+from routes import epic, user_story, sprint, task_routes, developer_routes
 # from dotenv import load_dotenv
 import logging
 
@@ -30,6 +30,8 @@ app: FastAPI = get_fast_api_app(
 app.include_router(epic.router)
 app.include_router(user_story.router)
 app.include_router(sprint.router)
+app.include_router(task_routes.router)
+app.include_router(developer_routes.router)
 
 # Add custom endpoints
 @app.get("/test")

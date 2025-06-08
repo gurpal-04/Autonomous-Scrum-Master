@@ -101,6 +101,46 @@ def get_epic_stories(epic_id: EpicId) -> List[Dict]:
             stories.append(story_data)
     return stories
 
+def bulk_link_stories_to_epic(story_ids: List[StoryId], epic_id: EpicId) -> None:
+    """
+    Link multiple stories to an epic in a single batch operation.
+    
+    Args:
+        story_ids: List of story IDs to link
+        epic_id: ID of the epic to link to
+    """
+    # Verify epic exists
+    epic_doc = db.collection("epics").document(epic_id).get()
+    if not epic_doc.exists:
+        raise EntityNotFoundError(f"Epic {epic_id} does not exist")
+    
+    # Verify all stories exist
+    stories_ref = db.collection("stories")
+    for story_id in story_ids:
+        if not stories_ref.document(story_id).get().exists:
+            raise EntityNotFoundError(f"Story {story_id} does not exist")
+    
+    # Create batch operation
+    batch = db.batch()
+    
+    # Update epic with all story IDs
+    epic_ref = db.collection("epics").document(epic_id)
+    batch.update(epic_ref, {
+        "stories": firestore.ArrayUnion(story_ids)
+    })
+    
+    # Update all stories with epic ID
+    current_time = datetime.now(timezone.utc)
+    for story_id in story_ids:
+        story_ref = stories_ref.document(story_id)
+        batch.update(story_ref, {
+            "epic_id": epic_id,
+            "updated_at": current_time
+        })
+    
+    # Execute the batch
+    batch.commit()
+
 # ---------- Story-Task Relationships ----------
 
 def link_task_to_story(task_id: TaskId, story_id: StoryId) -> None:

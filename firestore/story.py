@@ -1,6 +1,7 @@
 from firestore.firestore_client import db
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Dict
+from google.cloud import firestore
 
 from dotenv import load_dotenv
 import os
@@ -15,6 +16,31 @@ def create_story(data: dict) -> str:
     data["created_at"] = datetime.now(timezone.utc)
     doc_ref = db.collection(STORY_COLLECTION).add(data)
     return doc_ref[1].id
+
+def bulk_create_stories(stories_data: List[Dict]) -> List[Dict[str, str]]:
+    """
+    Create multiple stories in a batch operation.
+    Returns a list of dictionaries containing story IDs and their data.
+    """
+    batch = db.batch()
+    story_refs = []
+    current_time = datetime.now(timezone.utc)
+    
+    # Prepare all stories in the batch
+    for story_data in stories_data:
+        doc_ref = db.collection(STORY_COLLECTION).document()
+        story_data["created_at"] = current_time
+        batch.set(doc_ref, story_data)
+        story_refs.append((doc_ref, story_data))
+    
+    # Commit the batch
+    batch.commit()
+    
+    # Return the created stories with their IDs
+    return [{
+        "id": ref.id,
+        **data
+    } for ref, data in story_refs]
 
 def get_story(story_id: str):
     doc = db.collection(STORY_COLLECTION).document(story_id).get()
