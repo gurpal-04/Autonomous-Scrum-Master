@@ -60,4 +60,6 @@ root_agent = LlmAgent(
     """,
     output_schema=DecomposedTaskList,
     output_key="decomposed_tasks",
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True 
 )

@@ -56,5 +56,7 @@ root_agent = Agent(
         Do not include any explanation or additional text outside this JSON structure.
     """,
     output_schema=UserStoryList,
-    output_key="stories"
+    output_key="stories",
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True 
 )

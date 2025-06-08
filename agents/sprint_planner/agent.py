@@ -73,5 +73,7 @@ root_agent = LlmAgent(
         DO NOT include any explanation or extra text outside the JSON.
     """,
     output_schema=PlanningOutput,
-    output_key="planned_tasks"
+    output_key="planned_tasks",
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True 
 )
