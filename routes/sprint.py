@@ -9,16 +9,50 @@ from controllers.sprint_controller import (
     add_sprint_comment_logic,
     get_sprint_comments_logic,
     log_sprint_activity_logic,
-    get_sprint_activity_log_logic
+    get_sprint_activity_log_logic,
+    get_sprint_tasks_logic
 )
 from models.sprint import SprintCreate, SprintUpdate, SprintComment, SprintActivity, SprintPlan
+from firestore import sprint as sprint_module
 
 router = APIRouter(prefix="/sprint", tags=["Sprint Planner"])
 
 @router.post("/plan")
 async def plan_sprint(payload: SprintPlan):
     result = await plan_sprint_logic(payload.model_dump())
-    return {"response": result}
+    return result
+
+@router.get("/{sprint_id}/tasks")
+async def get_sprint_tasks(sprint_id: str):
+    """Get all tasks planned for a sprint."""
+    return await get_sprint_tasks_logic(sprint_id)
+
+@router.post("/{sprint_id}/tasks")
+async def add_tasks_to_sprint(sprint_id: str, task_ids: list):
+    """Add task IDs to a sprint."""
+    try:
+        sprint_module.add_tasks_to_sprint(sprint_id, task_ids)
+        return {"message": f"Added {len(task_ids)} tasks to sprint"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/{sprint_id}/tasks")
+async def remove_tasks_from_sprint(sprint_id: str, task_ids: list):
+    """Remove task IDs from a sprint."""
+    try:
+        sprint_module.remove_tasks_from_sprint(sprint_id, task_ids)
+        return {"message": f"Removed {len(task_ids)} tasks from sprint"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{sprint_id}/assignments")
+async def update_task_assignments(sprint_id: str, assignments: dict):
+    """Update task assignments for a sprint."""
+    try:
+        sprint_module.update_task_assignments(sprint_id, assignments)
+        return {"message": f"Updated {len(assignments)} task assignments"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/")
 async def create_sprint(sprint_data: SprintCreate):

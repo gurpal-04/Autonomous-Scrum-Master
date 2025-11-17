@@ -30,6 +30,16 @@ def delete_task(task_id: str):
 def list_tasks() -> List[dict]:
     return [doc.to_dict() | {"id": doc.id} for doc in db.collection(TASK_COLLECTION).stream()]
 
+def get_tasks_by_title(title: str) -> List[dict]:
+    """Get all tasks with a specific title."""
+    tasks = []
+    for doc in db.collection(TASK_COLLECTION).stream():
+        task_data = doc.to_dict()
+        if task_data.get("title") == title:
+            task_data["id"] = doc.id
+            tasks.append(task_data)
+    return tasks
+
 # ---------- COMMENTS ----------
 
 def add_comment(task_id: str, comment: dict) -> str:

@@ -36,8 +36,25 @@ class SprintActivity(BaseModel):
     user: str
     timestamp: Optional[datetime] = None
 
+class SprintTask(BaseModel):
+    title: str
+    description: str
+    role: str
+    estimate_hours: int
+    sprint_points: int
+
+class SprintDeveloper(BaseModel):
+    name: str
+    role: str
+    available_hours_per_day: int
+
 class SprintPlan(BaseModel):
-    sprint_goal: str
-    available_stories: List[str]
-    team_capacity: int
+    tasks: Optional[List[SprintTask]] = None
+    developers: Optional[List[SprintDeveloper]] = None
+    timeline_days: Optional[int] = None
+    sprint_name: Optional[str] = None
+    sprint_goal: Optional[str] = None
+    # Keep backward compatibility
+    available_stories: Optional[List[str]] = None
+    team_capacity: Optional[int] = None
     constraints: Optional[List[str]] = None 

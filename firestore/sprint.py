@@ -1,6 +1,6 @@
 from firestore.firestore_client import db
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Dict, Any
 
 from dotenv import load_dotenv
 import os
@@ -30,6 +30,113 @@ def delete_sprint(sprint_id: str):
 
 def list_sprints() -> List[dict]:
     return [doc.to_dict() | {"id": doc.id} for doc in db.collection(SPRINT_COLLECTION).stream()]
+
+# ---------- SPRINT PLANNING ----------
+
+def add_tasks_to_sprint(sprint_id: str, task_ids: List[str]) -> None:
+    """
+    Add task IDs to a sprint's planned tasks list.
+    
+    Args:
+        sprint_id: The ID of the sprint
+        task_ids: List of task IDs to add to the sprint
+    """
+    sprint_ref = db.collection(SPRINT_COLLECTION).document(sprint_id)
+    sprint_doc = sprint_ref.get()
+    
+    if not sprint_doc.exists:
+        raise ValueError(f"Sprint with ID {sprint_id} not found")
+    
+    # Get current planned tasks
+    current_data = sprint_doc.to_dict()
+    current_planned_tasks = current_data.get("planned_task_ids", [])
+    
+    # Add new task IDs (avoid duplicates)
+    updated_planned_tasks = list(set(current_planned_tasks + task_ids))
+    
+    # Update the sprint document
+    sprint_ref.update({
+        "planned_task_ids": updated_planned_tasks,
+        "updated_at": datetime.now(timezone.utc)
+    })
+
+def remove_tasks_from_sprint(sprint_id: str, task_ids: List[str]) -> None:
+    """
+    Remove task IDs from a sprint's planned tasks list.
+    
+    Args:
+        sprint_id: The ID of the sprint
+        task_ids: List of task IDs to remove from the sprint
+    """
+    sprint_ref = db.collection(SPRINT_COLLECTION).document(sprint_id)
+    sprint_doc = sprint_ref.get()
+    
+    if not sprint_doc.exists:
+        raise ValueError(f"Sprint with ID {sprint_id} not found")
+    
+    # Get current planned tasks
+    current_data = sprint_doc.to_dict()
+    current_planned_tasks = current_data.get("planned_task_ids", [])
+    
+    # Remove task IDs
+    updated_planned_tasks = [task_id for task_id in current_planned_tasks if task_id not in task_ids]
+    
+    # Update the sprint document
+    sprint_ref.update({
+        "planned_task_ids": updated_planned_tasks,
+        "updated_at": datetime.now(timezone.utc)
+    })
+
+def get_sprint_tasks(sprint_id: str) -> List[dict]:
+    """
+    Get all tasks planned for a sprint.
+    
+    Args:
+        sprint_id: The ID of the sprint
+    
+    Returns:
+        List of task documents
+    """
+    sprint_doc = db.collection(SPRINT_COLLECTION).document(sprint_id).get()
+    if not sprint_doc.exists:
+        return []
+    
+    sprint_data = sprint_doc.to_dict()
+    planned_task_ids = sprint_data.get("planned_task_ids", [])
+    
+    if not planned_task_ids:
+        return []
+    
+    # Fetch task documents
+    tasks = []
+    for task_id in planned_task_ids:
+        task_doc = db.collection("tasks").document(task_id).get()
+        if task_doc.exists:
+            task_data = task_doc.to_dict()
+            task_data["id"] = task_id
+            tasks.append(task_data)
+    
+    return tasks
+
+def update_task_assignments(sprint_id: str, task_assignments: Dict[str, str]) -> None:
+    """
+    Update task assignments for tasks in a sprint.
+    
+    Args:
+        sprint_id: The ID of the sprint
+        task_assignments: Dictionary mapping task_id to assigned developer name
+    """
+    batch = db.batch()
+    
+    for task_id, assigned_to in task_assignments.items():
+        task_ref = db.collection("tasks").document(task_id)
+        batch.update(task_ref, {
+            "assigned_to": assigned_to,
+            "sprint_id": sprint_id,
+            "updated_at": datetime.now(timezone.utc)
+        })
+    
+    batch.commit()
 
 # ---------- COMMENTS ----------
 

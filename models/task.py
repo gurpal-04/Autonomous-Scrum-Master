@@ -13,6 +13,7 @@ class TaskBase(BaseModel):
     sprint_id: Optional[str] = None
     due_date: Optional[str] = None
     sprint_points: Optional[int] = None
+    blocked_by: List[str] = Field(default_factory=list)
 
 class TaskCreate(TaskBase):
     pass
@@ -28,6 +29,7 @@ class TaskUpdate(BaseModel):
     sprint_id: Optional[str] = None
     due_date: Optional[str] = None
     sprint_points: Optional[int] = None
+    blocked_by: Optional[List[str]] = None
 
 class CommentBase(BaseModel):
     content: str

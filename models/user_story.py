@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 
 class UserStoryBase(BaseModel):
@@ -13,6 +13,7 @@ class UserStoryBase(BaseModel):
     assignee: Optional[str] = None
     story_points: Optional[int] = None
     due_date: Optional[datetime] = None
+    blocked_by: List[str] = Field(default_factory=list)
 
 class UserStoryCreate(UserStoryBase):
     pass
@@ -28,6 +29,7 @@ class UserStoryUpdate(BaseModel):
     assignee: Optional[str] = None
     story_points: Optional[int] = None
     due_date: Optional[datetime] = None
+    blocked_by: Optional[List[str]] = None
 
 class StoryComment(BaseModel):
     content: str

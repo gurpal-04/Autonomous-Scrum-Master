@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional, Dict
 from models.task import TaskBase, TaskCreate, TaskUpdate, CommentBase, ActivityBase
 from firestore.task import (
@@ -55,9 +55,38 @@ async def delete_task_by_id(task_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/", response_model=List[dict])
-async def get_all_tasks():
+async def get_all_tasks(
+    status: Optional[str] = Query(None, description="Filter by task status"),
+    assignee_id: Optional[str] = Query(None, description="Filter by assigned developer ID"),
+    epic_id: Optional[str] = Query(None, description="Filter by epic ID"),
+    priority: Optional[str] = Query(None, description="Filter by priority level")
+):
+    """
+    Get all tasks with optional filtering.
+    
+    Args:
+        status: Filter by task status (todo, in_progress, review, done)
+        assignee_id: Filter by assigned developer ID
+        epic_id: Filter by epic ID
+        priority: Filter by priority level (low, medium, high, critical)
+    """
     try:
-        return list_tasks()
+        all_tasks = list_tasks()
+        
+        # Apply filters if provided
+        if status:
+            all_tasks = [task for task in all_tasks if task.get("status") == status]
+        
+        if assignee_id:
+            all_tasks = [task for task in all_tasks if task.get("assignee_id") == assignee_id]
+        
+        if epic_id:
+            all_tasks = [task for task in all_tasks if task.get("epic_id") == epic_id]
+        
+        if priority:
+            all_tasks = [task for task in all_tasks if task.get("priority") == priority]
+        
+        return all_tasks
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -13,6 +13,7 @@ APP_NAME = "epic decomposer"
 
 async def decompose_epic_logic(payload: str):
     input_data = json.loads(payload)
+    print("------> input_data", input_data)
     epic_id = input_data.get("epic_id")
 
     new_session = session_service.create_session(
